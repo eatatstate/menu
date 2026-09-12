@@ -15,6 +15,31 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Light theme — opt-in via html.light (toggle, persisted in localStorage).
+   Dark remains the default. */
+html.light {
+  --bg: #f5f7f5;
+  --panel: #ffffff;
+  --panel2: #eef2ef;
+  --line: #dbe3dd;
+  --text: #1c2620;
+  --muted: #5a6e65;
+  --dim: #8a9c93;
+  --accent: #148a63;
+  --accent2: #9a6c07;
+  --entree: #d04a37;
+  --chip: #e9efeb;
+  --chip-active: #d7e4dc;
+}
+html.light .offline-banner { background: #f6e7bd; color: #6b4e0a; }
+html.light .cat-badge { color: #33443c; background: #d9e4dd; }
+html.light .cat-badge.entree { color: #8c2b20; background: #f8e1dd; }
+html.light .cat-badge.side { color: #155e8c; background: #dcedf9; }
+html.light .cat-badge.grain { color: #7a5a12; background: #f5ebd4; }
+html.light .cat-badge.salad { color: #2f7a2a; background: #dff1db; }
+html.light .cat-badge.dessert { color: #7a3a8c; background: #efe0f5; }
+html.light .cat-badge.beverage { color: #1a6b66; background: #dcf0ee; }
+
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {

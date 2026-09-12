@@ -35,6 +35,33 @@
     return e;
   };
 
+  /* ---------- theme (dark default, light opt-in) ---------- */
+
+  const THEME_KEY = "eas-theme";
+  function isLight() { return document.documentElement.classList.contains("light"); }
+  function applyThemeBtn() {
+    const btn = $("#theme-btn");
+    if (!btn) return;
+    const light = isLight();
+    btn.textContent = light ? "🌙" : "☀️";
+    btn.title = light ? "Switch to dark theme" : "Switch to light theme";
+    btn.setAttribute("aria-label", btn.title);
+  }
+  function initTheme() {
+    // html.light already applied pre-paint by the head bootstrap.
+    const btn = $("#theme-btn");
+    if (btn) btn.addEventListener("click", () => {
+      const next = isLight() ? "dark" : "light";
+      document.documentElement.classList.toggle("light", next === "light");
+      try {
+        if (next === "dark") localStorage.removeItem(THEME_KEY);
+        else localStorage.setItem(THEME_KEY, "light");
+      } catch (e) {}
+      applyThemeBtn();
+    });
+    applyThemeBtn();
+  }
+
   /* ---------- data ---------- */
 
   function loadCache(meal, date) {
@@ -469,6 +496,8 @@
   }
 
   /* ---------- init ---------- */
+
+  initTheme();
 
   const today = todayStr();
   const cached = STATIC ? null : loadCache("lunch", today);
