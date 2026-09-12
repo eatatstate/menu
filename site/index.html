@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Eat at State — Lunch</title>
+<meta name="description" content="Michigan State University campus dining lunch menus">
+<meta name="theme-color" content="#0d1512">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EaS Lunch">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">🍽</span>
+      <div>
+        <h1>Eat at State</h1>
+        <div class="brand-sub"><span id="meal-label">Lunch</span> · <span id="date-label">—</span></div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="seg meal-seg" role="tablist" aria-label="Meal">
+        <button id="meal-breakfast" class="seg-btn" role="tab">Breakfast</button>
+        <button id="meal-lunch" class="seg-btn active" role="tab">Lunch</button>
+        <button id="meal-dinner" class="seg-btn" role="tab">Dinner</button>
+      </div>
+      <button id="refresh-btn" class="icon-btn" title="Refresh" aria-label="Refresh">⟳</button>
+    </div>
+  </div>
+</header>
+
+<div id="offline-banner" class="offline-banner" role="alert" hidden>
+  Offline — showing cached data
+</div>
+
+<div class="hall-row" id="hall-row" role="tablist" aria-label="Dining halls"></div>
+
+<div class="controls">
+  <div class="seg" role="tablist" aria-label="View mode">
+    <button id="seg-stations" class="seg-btn active" role="tab" aria-selected="true">Stations</button>
+    <button id="seg-categories" class="seg-btn" role="tab" aria-selected="false">Categories</button>
+  </div>
+  <div class="cat-row" id="cat-row" hidden></div>
+</div>
+
+<div class="search-row">
+  <div class="search-wrap">
+    <span class="search-ico" aria-hidden="true">⌕</span>
+    <input id="search" type="search" placeholder="Search dishes…" autocomplete="off" aria-label="Search dishes">
+    <button id="search-clear" class="search-clear" hidden aria-label="Clear search">×</button>
+  </div>
+</div>
+
+<main id="content" class="content" role="region" aria-label="Menu">
+  <div class="status" id="status">Loading menus…</div>
+</main>
+
+<footer class="footer">
+  <span id="fetched-at"></span> · eatatstate.msu.edu
+</footer>
+
+<div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-close" data-close aria-label="Close">×</button>
+    <div class="modal-cat" id="modal-cat"></div>
+    <h2 id="modal-title"></h2>
+    <div class="modal-meta" id="modal-meta"></div>
+    <p id="modal-desc" class="modal-desc"></p>
+    <div id="modal-ingredients" class="modal-ingredients" hidden>
+      <h3>Ingredients</h3>
+      <p id="modal-ingredients-text"></p>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
