@@ -464,7 +464,7 @@
 
   if ("serviceWorker" in navigator && !STATIC) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register("sw.js").catch(() => {});
     });
   }
 
