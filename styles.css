@@ -327,6 +327,12 @@ button { font: inherit; cursor: pointer; }
 }
 .footer a { color: var(--muted); text-decoration: none; }
 .footer a:active { color: var(--accent); }
+.build-sha {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: .68rem;
+  color: var(--dim, var(--muted));
+  letter-spacing: .3px;
+}
 
 .modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: end center; }
 .modal[hidden] { display: none; }
