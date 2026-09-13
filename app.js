@@ -474,6 +474,8 @@
     for (const cat of CATEGORIES) {
       const list = byCat[cat];
       if (!list) continue;
+      // Items with nutrition data (calories) float to the top of each category.
+      list.sort((a, b) => (b.item.calories ? 1 : 0) - (a.item.calories ? 1 : 0));
       const sec = el("section", "cat-section");
       sec.appendChild(el("h2", null, CAT_LABEL[cat] + "  (" + list.length + ")"));
       const ul = el("ul", "cat-list");
