@@ -235,7 +235,7 @@
     renderCatRow();
     $("#date-label").textContent = state.date;
     $("#fetched-at").textContent =
-      "Updated " + new Date(state.data.fetched_at).toLocaleString();
+      "Updated " + new Date(state.data.fetched_at).toLocaleString() + " · " + state.meal;
     renderContentOnly();
   }
 
