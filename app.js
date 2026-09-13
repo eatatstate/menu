@@ -446,6 +446,7 @@
     const b = el("button", "item");
     b.appendChild(document.createTextNode(entry.item.name));
     b.appendChild(proteinIcons(entry.item));
+    if (entry.item.calories) b.appendChild(el("span", "cal", Math.round(entry.item.calories) + " cal"));
     b.appendChild(el("span", "hall-tag", entryTag(entry, searching)));
     b.appendChild(itemBadge(entry.item.cat));
     b.addEventListener("click", () => openModal(entry));
