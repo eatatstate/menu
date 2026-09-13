@@ -255,6 +255,8 @@ button { font: inherit; cursor: pointer; }
   border-left: 3px solid var(--entree);
 }
 .item .cal { color: var(--dim); font-size: .74rem; margin-left: 6px; font-weight: 400; }
+.protein-icons { margin-left: 6px; white-space: nowrap; }
+.protein { font-size: .9em; margin-right: 2px; cursor: help; }
 .cat-badge {
   display: inline-block;
   font-size: .58rem; font-weight: 700;

@@ -313,9 +313,45 @@
     return b;
   }
 
+  /* ---------- protein detection (from dish names; data has no such field) ---------- */
+
+  const PROTEINS = [
+    { id: "beef",      label: "Beef",      emoji: "🐄", re: /\b(beef|steak|hamburg?er|roast beef)\b/i },
+    { id: "pork",      label: "Pork",      emoji: "🐖", re: /\b(pork|sausage|bacon)\b|\bham\b(?!\w*burger)/i },
+    { id: "lamb",      label: "Lamb",      emoji: "🐑", re: /\blamb\b/i },
+    { id: "poultry",   label: "Poultry",   emoji: "🍗", re: /\b(chicken|turkey|drumstick|thighs?)\b/i },
+    { id: "fish",      label: "Fish",      emoji: "🐟", re: /\b(fish|salmon|tuna|cod|tilapia|trout|mackerel)\b/i },
+    { id: "shellfish", label: "Shellfish", emoji: "🦐", re: /\b(shrimp|prawn|crab|lobster|scallop|calamari)\b/i },
+  ];
+  function detectProteins(name) {
+    const out = [];
+    const n = name || "";
+    // A "turkey burger" is poultry, not beef: suppress beef on burger when poultry is present.
+    const isPoultry = /\b(chicken|turkey)\b/i.test(n);
+    for (const p of PROTEINS) {
+      if (p.id === "beef" && isPoultry) {
+        if (/\b(beef|steak|roast beef)\b/i.test(n)) out.push(p);
+      } else if (p.re.test(n)) {
+        out.push(p);
+      }
+    }
+    return out;
+  }
+  function proteinIcons(item) {
+    const wrap = el("span", "protein-icons");
+    for (const p of detectProteins(item.name)) {
+      const s = el("span", "protein");
+      s.textContent = p.emoji;
+      s.title = p.label;
+      wrap.appendChild(s);
+    }
+    return wrap;
+  }
+
   function makeItemButton(entry) {
     const b = el("button", "item" + (entry.item.cat === "entree" ? " entree" : ""));
     b.appendChild(document.createTextNode(entry.item.name));
+    b.appendChild(proteinIcons(entry.item));
     if (entry.item.calories) b.appendChild(el("span", "cal", Math.round(entry.item.calories) + " cal"));
     b.appendChild(itemBadge(entry.item.cat));
     b.addEventListener("click", () => openModal(entry));
@@ -383,6 +419,7 @@
         for (const e of items) {
           const b = el("button", "item");
           b.appendChild(document.createTextNode(e.item.name));
+          b.appendChild(proteinIcons(e.item));
           b.appendChild(el("span", "hall-tag", e.station));
           b.appendChild(itemBadge(e.item.cat));
           b.addEventListener("click", () => openModal(e));
@@ -400,6 +437,7 @@
     const m = $("#modal");
     const it = entry.item;
     $("#modal-title").textContent = it.name;
+    $("#modal-title").appendChild(proteinIcons(it));
     const catDiv = $("#modal-cat");
     catDiv.innerHTML = "";
     catDiv.appendChild(itemBadge(it.cat));
