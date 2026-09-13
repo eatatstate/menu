@@ -561,6 +561,22 @@
   }
 
   const searchInput = $("#search");
+  // Collapsed search: ⌕ button on the view-mode row toggles the input row.
+  const searchRow = $("#search-row");
+  const searchToggle = $("#search-toggle");
+  function setSearchOpen(open) {
+    searchRow.hidden = !open;
+    searchToggle.setAttribute("aria-expanded", String(open));
+    if (open) searchInput.focus();
+    else {
+      searchInput.value = "";
+      state.query = "";
+      $("#search-clear").hidden = true;
+      renderCatRow();
+      renderContentOnly();
+    }
+  }
+  searchToggle.addEventListener("click", () => setSearchOpen(searchRow.hidden));
   searchInput.addEventListener("input", () => {
     state.query = searchInput.value.trim();
     $("#search-clear").hidden = !state.query;

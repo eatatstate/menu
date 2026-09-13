@@ -147,8 +147,11 @@ button { font: inherit; cursor: pointer; }
 .controls {
   max-width: 860px; margin: 0 auto;
   padding: 8px 16px 0;
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; align-items: center; gap: 8px;
 }
+.controls .seg { flex: 0 1 auto; }
+#search-toggle { margin-left: auto; flex: 0 0 auto; }
+.cat-row { flex-basis: 100%; }
 .seg {
   display: inline-flex;
   align-self: flex-start;
