@@ -300,6 +300,8 @@ button { font: inherit; cursor: pointer; }
   font-size: .72rem;
   padding: 10px 16px calc(16px + var(--safe-bottom));
 }
+.footer a { color: var(--muted); text-decoration: none; }
+.footer a:active { color: var(--accent); }
 
 .modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: end center; }
 .modal[hidden] { display: none; }
