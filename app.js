@@ -200,6 +200,8 @@
     state.data = null;
     $("#hall-row").innerHTML = "";
     $("#cat-row").hidden = true;
+    $("#protein-row").hidden = true;
+    $("#protein-chips").innerHTML = "";
     $("#content").innerHTML = "";
     const d = el("div", "error");
     d.appendChild(el("div", null, "Could not load menus"));
@@ -559,6 +561,7 @@
     if (navigator.onLine && !state.loading) {
       // back online: refetch to clear stale banner
       showOffline(false);
+      doFetch(state.meal, { force: true });
     } else if (!navigator.onLine) {
       showOffline(true);
     }
