@@ -263,12 +263,14 @@
     row.innerHTML = "";
     if (state.view !== "categories") { row.hidden = true; return; }
     row.hidden = false;
-    const halls = state.data.halls;
-    const hall = halls[state.hallIndex] || halls[0];
     const counts = {};
-    if (hall && !hall.closed && !hall.error) {
-      for (const e of hallItems(hall)) counts[e.item.cat] = (counts[e.item.cat] || 0) + 1;
-    }
+    // Counts follow the content scoping: all halls while searching,
+    // otherwise the selected hall only.
+    const entries = state.query ? allHallItems() : (() => {
+      const hall = (state.data.halls[state.hallIndex] || state.data.halls[0]);
+      return hall && !hall.closed && !hall.error ? hallItems(hall) : [];
+    })();
+    for (const e of entries) counts[e.item.cat] = (counts[e.item.cat] || 0) + 1;
     const all = el("button", "cat-chip" + (state.cats.size === 0 ? " active" : ""));
     all.textContent = "All";
     all.addEventListener("click", () => { state.cats.clear(); renderCatRow(); renderContentOnly(); });
@@ -375,37 +377,74 @@
     return out;
   }
 
+  // Flat entries across every open hall — used by search, which spans all halls.
+  function allHallItems() {
+    const out = [];
+    for (const h of state.data.halls) {
+      if (h.closed || h.error) continue;
+      for (const e of hallItems(h)) out.push(e);
+    }
+    return out;
+  }
+
+  // Per-item source tag: station only when hall-scoped, "hall · station" in
+  // global search where the hall is no longer implied.
+  function entryTag(e, searching) {
+    return searching ? e.hall + " · " + e.station : e.station;
+  }
+
   function renderStations() {
     const c = $("#content");
     c.innerHTML = "";
-    const hall = selectedHall(c);
-    if (!hall) return;
     const q = state.query.toLowerCase();
+    const searching = !!q;
+    // No search: the selected hall. Search: every open hall.
+    const halls = searching
+      ? state.data.halls.filter((h) => !h.closed && !h.error)
+      : [selectedHall(c)];
+    if (!searching && !halls[0]) return;
     let shown = 0;
-    for (const s of hall.stations) {
-      const items = s.items.filter((it) => matches(q, { item: it, hall: hall.name, station: s.name }));
-      if (!items.length) continue;
-      shown += items.length;
-      const box = el("section", "station");
-      const head = el("div", "station-head");
-      head.appendChild(el("span", "station-name", s.name));
-      if (s.group) head.appendChild(el("span", "station-group", s.group));
-      box.appendChild(head);
-      const ul = el("ul", "items");
-      for (const it of items) ul.appendChild(makeItemButton({ item: it, hall: hall.name, station: s.name }));
-      box.appendChild(ul);
-      c.appendChild(box);
+    for (const hall of halls) {
+      if (!hall) continue;
+      const byStation = {};
+      const order = [];
+      for (const s of hall.stations) {
+        const items = s.items.filter((it) => matches(q, { item: it, hall: hall.name, station: s.name }));
+        if (!items.length) continue;
+        if (!byStation[s.name]) { byStation[s.name] = { group: s.group, items: [] }; order.push(s.name); }
+        byStation[s.name].items.push(...items);
+        shown += items.length;
+      }
+      // In global search the hall earns a header; otherwise the station name
+      // leads, exactly like the normal Stations view.
+      for (const name of order) {
+        const st = byStation[name];
+        const box = el("section", "station");
+        const head = el("div", "station-head");
+        if (searching) {
+          head.appendChild(el("span", "station-name", hall.name));
+          head.appendChild(el("span", "station-group", name));
+        } else {
+          head.appendChild(el("span", "station-name", name));
+          if (st.group) head.appendChild(el("span", "station-group", st.group));
+        }
+        box.appendChild(head);
+        const ul = el("ul", "items");
+        for (const it of st.items) ul.appendChild(makeItemButton({ item: it, hall: hall.name, station: name }));
+        box.appendChild(ul);
+        c.appendChild(box);
+      }
     }
-    if (!shown) c.appendChild(el("div", "empty", "No dishes match your search."));
+    if (!shown) c.appendChild(el("div", "empty", searching ? "No dishes match your search." : "No dishes to show."));
   }
 
   // Item button for a "list" section (cat-section/cat-list): name, protein
-  // icons, station tag, category badge. Used by both Categories and Nutrition.
-  function makeListItemButton(entry) {
+  // icons, station/hall tag, category badge. Used by Categories and Nutrition.
+  function makeListItemButton(entry, searching) {
     const b = el("button", "item");
     b.appendChild(document.createTextNode(entry.item.name));
     b.appendChild(proteinIcons(entry.item));
-    b.appendChild(el("span", "hall-tag", entry.station));
+    b.appendChild(el("span", "hall-tag", entryTag(entry, searching)));
     b.appendChild(itemBadge(entry.item.cat));
     b.addEventListener("click", () => openModal(entry));
     return b;
@@ -414,12 +453,19 @@
   function renderCategories() {
     const c = $("#content");
     c.innerHTML = "";
-    const hall = selectedHall(c);
-    if (!hall) return;
     const q = state.query.toLowerCase();
-    const entries = hallItems(hall).filter((e) =>
-      (state.cats.size === 0 || state.cats.has(e.item.cat)) && matches(q, e)
-    );
+    const searching = !!q;
+    // Search spans all halls; otherwise the selected hall only.
+    let entries;
+    if (searching) {
+      entries = allHallItems().filter((e) =>
+        (state.cats.size === 0 || state.cats.has(e.item.cat)) && matches(q, e));
+    } else {
+      const hall = selectedHall(c);
+      if (!hall) return;
+      entries = hallItems(hall).filter((e) =>
+        (state.cats.size === 0 || state.cats.has(e.item.cat)) && matches(q, e));
+    }
     if (!entries.length) { c.appendChild(el("div", "empty", "No dishes match your search.")); return; }
     const byCat = {};
     for (const e of entries) (byCat[e.item.cat] = byCat[e.item.cat] || []).push(e);
@@ -429,7 +475,7 @@
       const sec = el("section", "cat-section");
       sec.appendChild(el("h2", null, CAT_LABEL[cat] + "  (" + list.length + ")"));
       const ul = el("ul", "cat-list");
-      for (const e of list) ul.appendChild(makeListItemButton(e));
+      for (const e of list) ul.appendChild(makeListItemButton(e, searching));
       sec.appendChild(ul);
       c.appendChild(sec);
     }
@@ -438,10 +484,16 @@
   function renderNutrition() {
     const c = $("#content");
     c.innerHTML = "";
-    const hall = selectedHall(c);
-    if (!hall) return;
     const q = state.query.toLowerCase();
-    const entries = hallItems(hall).filter((e) => matches(q, e));
+    const searching = !!q;
+    let entries;
+    if (searching) {
+      entries = allHallItems().filter((e) => matches(q, e));
+    } else {
+      const hall = selectedHall(c);
+      if (!hall) return;
+      entries = hallItems(hall).filter((e) => matches(q, e));
+    }
     if (!entries.length) { c.appendChild(el("div", "empty", "No dishes match your search.")); return; }
     const byProtein = {};
     for (const e of entries) {
@@ -455,7 +507,7 @@
       const sec = el("section", "cat-section");
       sec.appendChild(el("h2", null, p.emoji + " " + p.label + "  (" + list.length + ")"));
       const ul = el("ul", "cat-list");
-      for (const e of list) ul.appendChild(makeListItemButton(e));
+      for (const e of list) ul.appendChild(makeListItemButton(e, searching));
       sec.appendChild(ul);
       c.appendChild(sec);
     }
@@ -512,12 +564,14 @@
   searchInput.addEventListener("input", () => {
     state.query = searchInput.value.trim();
     $("#search-clear").hidden = !state.query;
+    renderCatRow(); // chip counts follow the search scoping (all halls)
     renderContentOnly();
   });
   $("#search-clear").addEventListener("click", () => {
     searchInput.value = "";
     state.query = "";
     $("#search-clear").hidden = true;
+    renderCatRow();
     renderContentOnly();
   });
 
