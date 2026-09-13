@@ -222,8 +222,6 @@
   /* ---------- rendering ---------- */
 
   function renderChrome() {
-    const label = state.meal.charAt(0).toUpperCase() + state.meal.slice(1);
-    $("#meal-label").textContent = label;
     if (state.date) $("#date-label").textContent = state.date;
     document.title = "Eat at State - Simplified";
   }
