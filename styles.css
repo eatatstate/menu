@@ -5,12 +5,13 @@
   --line: #24322c;
   --text: #e8f0ec;
   --muted: #8fa39b;
-  --dim: #5f7169;
+  --dim: #74877e;
   --accent: #35c28f;
   --accent2: #ffd166;
   --entree: #ff7a6b;
   --chip: #1e2b25;
   --chip-active: #2c443a;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -24,14 +25,16 @@ html.light {
   --line: #dbe3dd;
   --text: #1c2620;
   --muted: #5a6e65;
-  --dim: #8a9c93;
-  --accent: #148a63;
-  --accent2: #9a6c07;
-  --entree: #d04a37;
+  --dim: #5f7168;
+  --accent: #0f7a58;
+  --accent2: #7d5805;
+  --entree: #c23f2d;
   --chip: #e9efeb;
   --chip-active: #d7e4dc;
 }
 html.light .offline-banner { background: #f6e7bd; color: #6b4e0a; }
+/* Light active hall chip: white text passes AA on the darker light accent. */
+html.light .hall-chip.active { color: #fff; }
 html.light .cat-badge { color: #33443c; background: #d9e4dd; }
 html.light .cat-badge.entree { color: #8c2b20; background: #f8e1dd; }
 html.light .cat-badge.side { color: #155e8c; background: #dcedf9; }
@@ -50,6 +53,17 @@ body {
   min-height: 100vh;
 }
 button { font: inherit; cursor: pointer; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
 
 .topbar {
   position: sticky; top: 0; z-index: 40;
