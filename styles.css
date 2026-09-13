@@ -106,6 +106,7 @@ button { font: inherit; cursor: pointer; }
 .brand-sub { font-size: .75rem; color: var(--muted); margin-top: 1px; }
 .icon-btn {
   width: 40px; height: 40px;
+  display: grid; place-items: center;
   border-radius: 10px;
   border: 1px solid var(--line);
   background: var(--panel);
