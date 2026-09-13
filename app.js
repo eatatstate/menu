@@ -23,6 +23,7 @@
     hallIndex: 0,
     view: "stations",    // "stations" | "categories"
     cats: new Set(),     // empty = all; in categories view
+    proteins: new Set(), // empty = all; protein filter group
     query: "",
     loading: false,
   };
@@ -251,6 +252,7 @@
     renderChrome();
     renderHallRow();
     renderCatRow();
+    renderProteinRow();
     $("#date-label").textContent = state.date;
     $("#fetched-at").textContent =
       "Updated " + new Date(state.data.fetched_at).toLocaleString();
@@ -300,6 +302,34 @@
         renderCatRow(); renderContentOnly();
       });
       row.appendChild(b);
+    }
+  }
+
+  function renderProteinRow() {
+    const row = $("#protein-row");
+    const chips = $("#protein-chips");
+    chips.innerHTML = "";
+    if (!state.data) { row.hidden = true; return; }
+    row.hidden = false;
+    const counts = {};
+    for (const e of allItems()) for (const p of detectProteins(e.item.name)) counts[p.id] = (counts[p.id] || 0) + 1;
+    const present = PROTEINS.filter((p) => counts[p.id]);
+    if (!present.length) { row.hidden = true; return; }
+    const all = el("button", "cat-chip" + (state.proteins.size === 0 ? " active" : ""));
+    all.textContent = "All";
+    all.addEventListener("click", () => { state.proteins.clear(); renderProteinRow(); renderContentOnly(); });
+    chips.appendChild(all);
+    for (const p of present) {
+      const b = el("button", "cat-chip" + (state.proteins.has(p.id) ? " active" : ""));
+      b.innerHTML = "";
+      b.appendChild(document.createTextNode(p.emoji + " " + p.label));
+      b.appendChild(el("span", "n", String(counts[p.id])));
+      b.addEventListener("click", () => {
+        if (state.proteins.has(p.id)) state.proteins.delete(p.id); else state.proteins.add(p.id);
+        if (state.proteins.size === present.length) state.proteins.clear();
+        renderProteinRow(); renderContentOnly();
+      });
+      chips.appendChild(b);
     }
   }
 
@@ -376,9 +406,11 @@
       return;
     }
     const q = state.query.toLowerCase();
+    const proteinOk = (e) => state.proteins.size === 0 ||
+      detectProteins(e.item.name).some((p) => state.proteins.has(p.id));
     let shown = 0;
     for (const s of hall.stations) {
-      const items = s.items.filter((it) => matches(q, { item: it, hall: hall.name, station: s.name }));
+      const items = s.items.filter((it) => proteinOk({ item: it }) && matches(q, { item: it, hall: hall.name, station: s.name }));
       if (!items.length) continue;
       shown += items.length;
       const box = el("section", "station");
@@ -399,7 +431,9 @@
     c.innerHTML = "";
     const q = state.query.toLowerCase();
     const entries = allItems().filter((e) =>
-      (state.cats.size === 0 || state.cats.has(e.item.cat)) && matches(q, e)
+      (state.cats.size === 0 || state.cats.has(e.item.cat)) &&
+      (state.proteins.size === 0 || detectProteins(e.item.name).some((p) => state.proteins.has(p.id))) &&
+      matches(q, e)
     );
     if (!entries.length) { c.appendChild(el("div", "empty", "No dishes match.")); return; }
     const byCat = {};
