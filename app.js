@@ -305,12 +305,12 @@
   /* ---------- protein detection (from dish names; data has no such field) ---------- */
 
   const PROTEINS = [
-    { id: "beef",      label: "Beef",      emoji: "🐂", re: /\b(beef|steak|hamburg?er|roast beef)\b/i },
-    { id: "pork",      label: "Pork",      emoji: "🐖", re: /\b(pork|sausage|bacon)\b|\bham\b(?!\w*burger)/i },
+    { id: "beef",      label: "Beef",      emoji: "🥩", re: /\b(beef|steak|hamburg?er|roast beef)\b/i },
+    { id: "pork",      label: "Pork",      emoji: "🥓", re: /\b(pork|sausage|bacon)\b|\bham\b(?!\w*burger)/i },
     { id: "lamb",      label: "Lamb",      emoji: "🐑", re: /\blamb\b/i },
-    { id: "poultry",   label: "Poultry",   emoji: "🐔", re: /\b(chicken|turkey|drumstick|thighs?)\b/i },
+    { id: "poultry",   label: "Poultry",   emoji: "🍗", re: /\b(chicken|turkey|drumstick|thighs?)\b/i },
     { id: "fish",      label: "Fish",      emoji: "🐟", re: /\b(fish|salmon|tuna|cod|tilapia|trout|mackerel)\b/i },
-    { id: "shellfish", label: "Shellfish", emoji: "🦐", re: /\b(shrimp|prawn|crab|lobster|scallop|calamari)\b/i },
+    { id: "shellfish", label: "Shellfish", emoji: "🍤", re: /\b(shrimp|prawn|crab|lobster|scallop|calamari)\b/i },
   ];
   function detectProteins(name) {
     const out = [];
