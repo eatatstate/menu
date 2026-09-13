@@ -1,7 +1,7 @@
 {
-  "name": "Eat at State — Lunch Menus",
-  "short_name": "EaS Lunch",
-  "description": "Michigan State University campus dining lunch menus",
+  "name": "Eat at State - Simplified",
+  "short_name": "Eat at State",
+  "description": "Michigan State University campus dining menus",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

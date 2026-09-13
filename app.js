@@ -243,7 +243,7 @@
     const label = state.meal.charAt(0).toUpperCase() + state.meal.slice(1);
     $("#meal-label").textContent = label;
     if (state.date) $("#date-label").textContent = state.date;
-    document.title = label + " · Eat at State";
+    document.title = "Eat at State - Simplified";
   }
 
   function render() {
