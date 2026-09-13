@@ -262,11 +262,16 @@
     const row = $("#hall-row");
     row.innerHTML = "";
     const halls = state.data.halls;
-    halls.forEach((h, i) => {
-      const b = el("button", "hall-chip" + (i === state.hallIndex ? " active" : "") + (h.closed ? " closed" : ""));
+    // Closed halls are hidden; keep the original data index for selection.
+    const open = halls.map((h, i) => ({ h, i })).filter((e) => !e.h.closed);
+    if (open.length && !open.some((e) => e.i === state.hallIndex)) {
+      state.hallIndex = open[0].i;
+    }
+    open.forEach(({ h, i }) => {
+      const b = el("button", "hall-chip" + (i === state.hallIndex ? " active" : ""));
       b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", String(i === state.hallIndex));
-      b.textContent = h.name + (h.closed ? " · closed" : "");
+      b.textContent = h.name;
       b.addEventListener("click", () => { state.hallIndex = i; renderHallRow(); renderContentOnly(); });
       row.appendChild(b);
     });
