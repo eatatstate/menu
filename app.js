@@ -39,11 +39,13 @@
 
   const THEME_KEY = "eas-theme";
   function isLight() { return document.documentElement.classList.contains("light"); }
+  const ICON_M = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+  const ICON_S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
   function applyThemeBtn() {
     const btn = $("#theme-btn");
     if (!btn) return;
     const light = isLight();
-    btn.textContent = light ? "🌙" : "☀️";
+    btn.innerHTML = light ? ICON_M : ICON_S;
     btn.title = light ? "Switch to dark theme" : "Switch to light theme";
     btn.setAttribute("aria-label", btn.title);
   }
@@ -354,7 +356,9 @@
     if (!hall) { c.appendChild(el("div", "empty", "No halls available.")); return null; }
     if (hall.closed) {
       const d = el("div", "hall-closed");
-      d.appendChild(el("div", "big", "🚪"));
+      const big = el("div", "big");
+      big.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20"/><path d="M14 12v.01"/></svg>';
+      d.appendChild(big);
       d.appendChild(el("div", null, hall.name + " is closed for lunch on " + state.date));
       c.appendChild(d);
       return null;

@@ -20,7 +20,7 @@
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <span class="brand-mark">🍽</span>
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></span>
       <div>
         <h1>Eat at State</h1>
         <div class="brand-sub"><span id="date-label">—</span></div>
@@ -32,8 +32,8 @@
         <button id="meal-lunch" class="seg-btn active" role="tab">Lunch</button>
         <button id="meal-dinner" class="seg-btn" role="tab">Dinner</button>
       </div>
-      <button id="refresh-btn" class="icon-btn" title="Refresh" aria-label="Refresh">⟳</button>
-      <button id="theme-btn" class="icon-btn" title="Switch to light theme" aria-label="Toggle theme">🌙</button>
+      <button id="refresh-btn" class="icon-btn" title="Refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
+      <button id="theme-btn" class="icon-btn" title="Switch to light theme" aria-label="Toggle theme"></button>
     </div>
   </div>
 </header>
@@ -51,15 +51,15 @@
     <button id="seg-categories" class="seg-btn" role="tab" aria-selected="false">Categories</button>
     <button id="seg-nutrition" class="seg-btn" role="tab" aria-selected="false">Nutrition</button>
   </div>
-  <button id="search-toggle" class="icon-btn" title="Search" aria-label="Toggle search" aria-expanded="false">⌕</button>
+  <button id="search-toggle" class="icon-btn" title="Search" aria-label="Toggle search" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
   <div class="cat-row" id="cat-row" hidden></div>
 </div>
 
 <div class="search-row" id="search-row" hidden>
   <div class="search-wrap">
-    <span class="search-ico" aria-hidden="true">⌕</span>
+    <span class="search-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
     <input id="search" type="search" placeholder="Search dishes…" autocomplete="off" aria-label="Search dishes">
-    <button id="search-clear" class="search-clear" hidden aria-label="Clear search">×</button>
+    <button id="search-clear" class="search-clear" hidden aria-label="Clear search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
   </div>
 </div>
 </div>
@@ -69,13 +69,13 @@
 </main>
 
 <footer class="footer">
-  <span id="fetched-at"></span> · built upon <a href="https://eatatstate.msu.edu" target="_blank" rel="noopener">eatatstate.msu.edu</a> <span class="build-sha">961c863</span>
+  <span id="fetched-at"></span> · built upon <a href="https://eatatstate.msu.edu" target="_blank" rel="noopener">eatatstate.msu.edu</a> <span class="build-sha">04ff877</span>
 </footer>
 
 <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="modal-backdrop" data-close></div>
   <div class="modal-card">
-    <button class="modal-close" data-close aria-label="Close">×</button>
+    <button class="modal-close" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     <div class="modal-cat" id="modal-cat"></div>
     <h2 id="modal-title"></h2>
     <div class="modal-meta" id="modal-meta"></div>
