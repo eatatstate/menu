@@ -236,6 +236,10 @@
     $("#date-label").textContent = state.date;
     $("#fetched-at").textContent =
       "Updated " + new Date(state.data.fetched_at).toLocaleString();
+    if (STATIC && staticFile) {
+      // No backend on the static site: point at the loaded snapshot file.
+      $("#json-link").href = "data/" + staticFile.date + ".json";
+    }
     renderContentOnly();
   }
 
