@@ -579,6 +579,20 @@
 
   initTheme();
 
+  // Desktop: horizontal-scroll the hall row with the mouse wheel
+  // (touch already scrolls natively).
+  const hallRow = $("#hall-row");
+  if (hallRow) hallRow.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // already horizontal
+    const max = hallRow.scrollWidth - hallRow.clientWidth;
+    if (max <= 0) return;
+    const atStart = hallRow.scrollLeft <= 0 && e.deltaY < 0;
+    const atEnd = hallRow.scrollLeft >= max && e.deltaY > 0;
+    if (atStart || atEnd) return; // let the page scroll at the edges
+    hallRow.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
+
   const today = todayStr();
   const cached = STATIC ? null : loadCache("lunch", today);
   if (cached) {
