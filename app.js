@@ -21,7 +21,7 @@
     meal: "lunch",
     date: null,
     hallIndex: 0,
-    view: "stations",    // "stations" | "categories" | "nutrition"
+    view: "categories",   // "stations" | "categories" | "nutrition"
     cats: new Set(),     // empty = all; in categories view
     query: "",
     loading: false,
