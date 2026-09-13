@@ -521,6 +521,9 @@
     renderContentOnly();
   });
 
+  // The static page is served from a provided JSON file, so there is no live
+  // source to refresh — hide the refresh button in STATIC mode.
+  if (STATIC) $("#refresh-btn").hidden = true;
   $("#refresh-btn").addEventListener("click", () => doFetch(state.meal, { force: true }));
 
   ["breakfast", "lunch", "dinner"].forEach((m) => {
@@ -589,14 +592,30 @@
     e.preventDefault();
   }, { passive: false });
 
-  const today = todayStr();
-  const cached = STATIC ? null : loadCache("lunch", today);
-  if (cached) {
-    state.data = cached;
-    state.date = cached.date;
-    render();
-  } else {
-    render(); // shows loading status
+  // Default meal by local time: 9:00–11:00 breakfast, 11:00–16:30 lunch,
+  // 16:30–21:00 dinner (3:00–4:30 is lunch per menu hours); before 9:00
+  // breakfast is the next service, after 21:00 dinner just ended.
+  function defaultMeal() {
+    const d = new Date();
+    const t = d.getHours() + d.getMinutes() / 60;
+    if (t >= 9 && t < 11) return "breakfast";
+    if (t >= 11 && t < 16.5) return "lunch";
+    if (t >= 16.5) return "dinner";
+    return "breakfast";
   }
-  doFetch("lunch");
+
+  const initialMeal = defaultMeal();
+  if (initialMeal !== state.meal) {
+    setMeal(initialMeal);
+  } else {
+    const cached = STATIC ? null : loadCache("lunch", todayStr());
+    if (cached) {
+      state.data = cached;
+      state.date = cached.date;
+      render();
+    } else {
+      render(); // shows loading status
+    }
+    doFetch("lunch");
+  }
 })();
