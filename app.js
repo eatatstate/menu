@@ -21,9 +21,8 @@
     meal: "lunch",
     date: null,
     hallIndex: 0,
-    view: "stations",    // "stations" | "categories"
+    view: "stations",    // "stations" | "categories" | "nutrition"
     cats: new Set(),     // empty = all; in categories view
-    proteins: new Set(), // empty = all; protein filter group
     query: "",
     loading: false,
   };
@@ -200,8 +199,6 @@
     state.data = null;
     $("#hall-row").innerHTML = "";
     $("#cat-row").hidden = true;
-    $("#protein-row").hidden = true;
-    $("#protein-chips").innerHTML = "";
     $("#content").innerHTML = "";
     const d = el("div", "error");
     d.appendChild(el("div", null, "Could not load menus"));
@@ -215,24 +212,6 @@
   }
 
   /* ---------- derived data ---------- */
-
-  function openHalls() {
-    if (!state.data) return [];
-    return state.data.halls.filter((h) => !h.closed && !h.error);
-  }
-
-  function allItems() {
-    // flat list: {hall, station, item}
-    const out = [];
-    for (const h of openHalls()) {
-      for (const s of h.stations) {
-        for (const it of s.items) {
-          out.push({ hall: h.name, station: s.name, item: it });
-        }
-      }
-    }
-    return out;
-  }
 
   function matches(q, entry) {
     if (!q) return true;
@@ -254,12 +233,10 @@
     renderChrome();
     renderHallRow();
     renderCatRow();
-    renderProteinRow();
     $("#date-label").textContent = state.date;
     $("#fetched-at").textContent =
       "Updated " + new Date(state.data.fetched_at).toLocaleString();
-    if (state.view === "stations") renderStations();
-    else renderCategories();
+    renderContentOnly();
   }
 
   function renderHallRow() {
@@ -286,8 +263,12 @@
     row.innerHTML = "";
     if (state.view !== "categories") { row.hidden = true; return; }
     row.hidden = false;
+    const halls = state.data.halls;
+    const hall = halls[state.hallIndex] || halls[0];
     const counts = {};
-    for (const e of allItems()) counts[e.item.cat] = (counts[e.item.cat] || 0) + 1;
+    if (hall && !hall.closed && !hall.error) {
+      for (const e of hallItems(hall)) counts[e.item.cat] = (counts[e.item.cat] || 0) + 1;
+    }
     const all = el("button", "cat-chip" + (state.cats.size === 0 ? " active" : ""));
     all.textContent = "All";
     all.addEventListener("click", () => { state.cats.clear(); renderCatRow(); renderContentOnly(); });
@@ -307,36 +288,10 @@
     }
   }
 
-  function renderProteinRow() {
-    const row = $("#protein-row");
-    const chips = $("#protein-chips");
-    chips.innerHTML = "";
-    if (!state.data) { row.hidden = true; return; }
-    row.hidden = false;
-    const counts = {};
-    for (const e of allItems()) for (const p of detectProteins(e.item.name)) counts[p.id] = (counts[p.id] || 0) + 1;
-    const present = PROTEINS.filter((p) => counts[p.id]);
-    if (!present.length) { row.hidden = true; return; }
-    const all = el("button", "cat-chip" + (state.proteins.size === 0 ? " active" : ""));
-    all.textContent = "All";
-    all.addEventListener("click", () => { state.proteins.clear(); renderProteinRow(); renderContentOnly(); });
-    chips.appendChild(all);
-    for (const p of present) {
-      const b = el("button", "cat-chip" + (state.proteins.has(p.id) ? " active" : ""));
-      b.innerHTML = "";
-      b.appendChild(document.createTextNode(p.emoji + " " + p.label));
-      b.appendChild(el("span", "n", String(counts[p.id])));
-      b.addEventListener("click", () => {
-        if (state.proteins.has(p.id)) state.proteins.delete(p.id); else state.proteins.add(p.id);
-        if (state.proteins.size === present.length) state.proteins.clear();
-        renderProteinRow(); renderContentOnly();
-      });
-      chips.appendChild(b);
-    }
-  }
-
   function renderContentOnly() {
-    if (state.view === "stations") renderStations(); else renderCategories();
+    if (state.view === "stations") renderStations();
+    else if (state.view === "categories") renderCategories();
+    else renderNutrition();
   }
 
   function itemBadge(cat) {
@@ -390,29 +345,45 @@
     return b;
   }
 
-  function renderStations() {
-    const c = $("#content");
-    c.innerHTML = "";
+  // Resolves the selected hall for hall-scoped views. If the hall is
+  // unavailable (missing/closed/error) it renders the appropriate message
+  // into #content and returns null; otherwise returns the hall untouched.
+  function selectedHall(c) {
     const halls = state.data.halls;
     const hall = halls[state.hallIndex] || halls[0];
-    if (!hall) { c.appendChild(el("div", "empty", "No halls available.")); return; }
+    if (!hall) { c.appendChild(el("div", "empty", "No halls available.")); return null; }
     if (hall.closed) {
       const d = el("div", "hall-closed");
       d.appendChild(el("div", "big", "🚪"));
       d.appendChild(el("div", null, hall.name + " is closed for lunch on " + state.date));
       c.appendChild(d);
-      return;
+      return null;
     }
     if (hall.error) {
       c.appendChild(el("div", "error", "Error loading " + hall.name + ": " + hall.error));
-      return;
+      return null;
     }
+    return hall;
+  }
+
+  // Flat {item, hall, station} entries for a single hall's stations.
+  function hallItems(hall) {
+    const out = [];
+    for (const s of hall.stations) {
+      for (const it of s.items) out.push({ item: it, hall: hall.name, station: s.name });
+    }
+    return out;
+  }
+
+  function renderStations() {
+    const c = $("#content");
+    c.innerHTML = "";
+    const hall = selectedHall(c);
+    if (!hall) return;
     const q = state.query.toLowerCase();
-    const proteinOk = (e) => state.proteins.size === 0 ||
-      detectProteins(e.item.name).some((p) => state.proteins.has(p.id));
     let shown = 0;
     for (const s of hall.stations) {
-      const items = s.items.filter((it) => proteinOk({ item: it }) && matches(q, { item: it, hall: hall.name, station: s.name }));
+      const items = s.items.filter((it) => matches(q, { item: it, hall: hall.name, station: s.name }));
       if (!items.length) continue;
       shown += items.length;
       const box = el("section", "station");
@@ -428,16 +399,28 @@
     if (!shown) c.appendChild(el("div", "empty", "No dishes match your search."));
   }
 
+  // Item button for a "list" section (cat-section/cat-list): name, protein
+  // icons, station tag, category badge. Used by both Categories and Nutrition.
+  function makeListItemButton(entry) {
+    const b = el("button", "item");
+    b.appendChild(document.createTextNode(entry.item.name));
+    b.appendChild(proteinIcons(entry.item));
+    b.appendChild(el("span", "hall-tag", entry.station));
+    b.appendChild(itemBadge(entry.item.cat));
+    b.addEventListener("click", () => openModal(entry));
+    return b;
+  }
+
   function renderCategories() {
     const c = $("#content");
     c.innerHTML = "";
+    const hall = selectedHall(c);
+    if (!hall) return;
     const q = state.query.toLowerCase();
-    const entries = allItems().filter((e) =>
-      (state.cats.size === 0 || state.cats.has(e.item.cat)) &&
-      (state.proteins.size === 0 || detectProteins(e.item.name).some((p) => state.proteins.has(p.id))) &&
-      matches(q, e)
+    const entries = hallItems(hall).filter((e) =>
+      (state.cats.size === 0 || state.cats.has(e.item.cat)) && matches(q, e)
     );
-    if (!entries.length) { c.appendChild(el("div", "empty", "No dishes match.")); return; }
+    if (!entries.length) { c.appendChild(el("div", "empty", "No dishes match your search.")); return; }
     const byCat = {};
     for (const e of entries) (byCat[e.item.cat] = byCat[e.item.cat] || []).push(e);
     for (const cat of CATEGORIES) {
@@ -445,26 +428,38 @@
       if (!list) continue;
       const sec = el("section", "cat-section");
       sec.appendChild(el("h2", null, CAT_LABEL[cat] + "  (" + list.length + ")"));
-      // group by hall
-      const byHall = {};
-      for (const e of list) (byHall[e.hall] = byHall[e.hall] || []).push(e);
-      for (const hall of Object.keys(byHall)) {
-        const items = byHall[hall];
-        if (Object.keys(byHall).length > 1) sec.appendChild(el("div", "cat-hall", hall));
-        const ul = el("ul", "cat-list");
-        for (const e of items) {
-          const b = el("button", "item");
-          b.appendChild(document.createTextNode(e.item.name));
-          b.appendChild(proteinIcons(e.item));
-          b.appendChild(el("span", "hall-tag", e.station));
-          b.appendChild(itemBadge(e.item.cat));
-          b.addEventListener("click", () => openModal(e));
-          ul.appendChild(b);
-        }
-        sec.appendChild(ul);
-      }
+      const ul = el("ul", "cat-list");
+      for (const e of list) ul.appendChild(makeListItemButton(e));
+      sec.appendChild(ul);
       c.appendChild(sec);
     }
+  }
+
+  function renderNutrition() {
+    const c = $("#content");
+    c.innerHTML = "";
+    const hall = selectedHall(c);
+    if (!hall) return;
+    const q = state.query.toLowerCase();
+    const entries = hallItems(hall).filter((e) => matches(q, e));
+    if (!entries.length) { c.appendChild(el("div", "empty", "No dishes match your search.")); return; }
+    const byProtein = {};
+    for (const e of entries) {
+      for (const p of detectProteins(e.item.name)) (byProtein[p.id] = byProtein[p.id] || []).push(e);
+    }
+    let shown = false;
+    for (const p of PROTEINS) {
+      const list = byProtein[p.id];
+      if (!list || !list.length) continue;
+      shown = true;
+      const sec = el("section", "cat-section");
+      sec.appendChild(el("h2", null, p.emoji + " " + p.label + "  (" + list.length + ")"));
+      const ul = el("ul", "cat-list");
+      for (const e of list) ul.appendChild(makeListItemButton(e));
+      sec.appendChild(ul);
+      c.appendChild(sec);
+    }
+    if (!shown) c.appendChild(el("div", "empty", "No dishes match your search."));
   }
 
   /* ---------- modal ---------- */
@@ -500,14 +495,15 @@
 
   /* ---------- controls ---------- */
 
-  $("#seg-stations").addEventListener("click", () => setView("stations"));
-  $("#seg-categories").addEventListener("click", () => setView("categories"));
+  const VIEWS = ["stations", "categories", "nutrition"];
+  VIEWS.forEach((v) => $("#seg-" + v).addEventListener("click", () => setView(v)));
   function setView(v) {
     state.view = v;
-    $("#seg-stations").classList.toggle("active", v === "stations");
-    $("#seg-categories").classList.toggle("active", v === "categories");
-    $("#seg-stations").setAttribute("aria-selected", String(v === "stations"));
-    $("#seg-categories").setAttribute("aria-selected", String(v === "categories"));
+    VIEWS.forEach((x) => {
+      const b = $("#seg-" + x);
+      b.classList.toggle("active", x === v);
+      b.setAttribute("aria-selected", String(x === v));
+    });
     renderCatRow();
     renderContentOnly();
   }
