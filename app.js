@@ -446,7 +446,6 @@
     const b = el("button", "item");
     b.appendChild(document.createTextNode(entry.item.name));
     b.appendChild(proteinIcons(entry.item));
-    if (entry.item.calories) b.appendChild(el("span", "cal", Math.round(entry.item.calories) + " cal"));
     b.appendChild(el("span", "hall-tag", entryTag(entry, searching)));
     b.appendChild(itemBadge(entry.item.cat));
     b.addEventListener("click", () => openModal(entry));
@@ -475,8 +474,9 @@
     for (const cat of CATEGORIES) {
       const list = byCat[cat];
       if (!list) continue;
-      // Items with nutrition data (calories) float to the top of each category.
-      list.sort((a, b) => (b.item.calories ? 1 : 0) - (a.item.calories ? 1 : 0));
+      // Items matching a protein type (beef, lamb, …) float to the top of each category.
+      list.sort((a, b) =>
+        (detectProteins(b.item.name).length ? 1 : 0) - (detectProteins(a.item.name).length ? 1 : 0));
       const sec = el("section", "cat-section");
       sec.appendChild(el("h2", null, CAT_LABEL[cat] + "  (" + list.length + ")"));
       const ul = el("ul", "cat-list");
