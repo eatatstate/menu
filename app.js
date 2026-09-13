@@ -632,6 +632,19 @@
 
   initTheme();
 
+  // Keep the sticky control bar docked right below the sticky topbar
+  // (topbar height varies: safe-area inset, mobile single-row layout).
+  const topbar = $(".topbar");
+  const syncStickbarTop = () => {
+    if (topbar) document.documentElement.style.setProperty("--topbar-h", topbar.offsetHeight + "px");
+  };
+  syncStickbarTop();
+  window.addEventListener("resize", syncStickbarTop);
+  window.addEventListener("load", syncStickbarTop);
+  if (topbar && "ResizeObserver" in window) {
+    new ResizeObserver(syncStickbarTop).observe(topbar);
+  }
+
   // Desktop: horizontal-scroll the hall row with the mouse wheel
   // (touch already scrolls natively).
   const hallRow = $("#hall-row");

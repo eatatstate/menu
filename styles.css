@@ -68,8 +68,14 @@ button { font: inherit; cursor: pointer; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
 .meal-seg { flex-wrap: wrap; }
 @media (max-width: 480px) {
-  .topbar-inner { flex-wrap: wrap; }
-  .topbar-actions { width: 100%; justify-content: space-between; }
+  /* Single row: title + meal tabs + theme (refresh hidden — page reload works). */
+  .topbar-inner { flex-wrap: nowrap; padding: 8px 12px; gap: 6px; }
+  .topbar-actions { width: auto; justify-content: flex-end; }
+  .brand-mark { display: none; }
+  .brand h1 { font-size: .95rem; white-space: nowrap; }
+  .meal-seg .seg-btn { padding: 6px 7px; font-size: .78rem; white-space: nowrap; }
+  #refresh-btn { display: none; }
+  .icon-btn { width: 34px; height: 34px; font-size: 1rem; }
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-mark {
@@ -103,6 +109,14 @@ button { font: inherit; cursor: pointer; }
   padding: 5px 10px;
 }
 
+.stickbar {
+  position: sticky; top: var(--topbar-h, 56px); z-index: 30;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+}
 .hall-row {
   display: flex; gap: 8px;
   overflow-x: auto;
