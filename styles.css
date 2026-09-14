@@ -173,7 +173,6 @@ button { font: inherit; cursor: pointer; }
 .cat-row { flex-basis: 100%; }
 .seg {
   display: inline-flex;
-  align-self: flex-start;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
