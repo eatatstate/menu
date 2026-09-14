@@ -38,7 +38,9 @@
   /* ---------- theme (dark default, light opt-in) ---------- */
 
   const THEME_KEY = "eas-theme";
-  const STATION_STATE_KEY = "eas-stations-collapsed"; // { "<hall>||<station>": true } — collapsed set
+  const STATION_STATE_KEY = "eas-stations-collapsed"; // ["<hall>||<station>", ...] — collapsed set
+  const VIEW_KEY = "eas-view";       // "stations" | "categories" | "nutrition"
+  const HALL_KEY = "eas-hall";       // hall name (index shifts when halls close, so persist by name)
   function isLight() { return document.documentElement.classList.contains("light"); }
   const ICON_M = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
   const ICON_S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
@@ -240,21 +242,37 @@
     renderContentOnly();
   }
 
+  let userPickedHall = false; // set on chip click; persisted hall only applies before that
   function renderHallRow() {
     const row = $("#hall-row");
     row.innerHTML = "";
     const halls = state.data.halls;
     // Closed halls are hidden; keep the original data index for selection.
     const open = halls.map((h, i) => ({ h, i })).filter((e) => !e.h.closed);
-    if (open.length && !open.some((e) => e.i === state.hallIndex)) {
-      state.hallIndex = open[0].i;
+    if (open.length) {
+      if (!userPickedHall) {
+        // First render of this session: restore the persisted hall by name
+        // (name, not index — the index shifts when halls are closed).
+        let saved = null;
+        try { saved = localStorage.getItem(HALL_KEY); } catch (e) {}
+        const match = open.find((e) => e.h.name === saved);
+        state.hallIndex = (match || open[0]).i;
+      } else if (!open.some((e) => e.i === state.hallIndex)) {
+        state.hallIndex = open[0].i; // selected hall is closed
+      }
     }
     open.forEach(({ h, i }) => {
       const b = el("button", "hall-chip" + (i === state.hallIndex ? " active" : ""));
       b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", String(i === state.hallIndex));
       b.textContent = h.name;
-      b.addEventListener("click", () => { state.hallIndex = i; renderHallRow(); renderContentOnly(); });
+      b.addEventListener("click", () => {
+        userPickedHall = true;
+        state.hallIndex = i;
+        try { localStorage.setItem(HALL_KEY, h.name); } catch (e) {}
+        renderHallRow();
+        renderContentOnly();
+      });
       row.appendChild(b);
     });
   }
@@ -400,14 +418,17 @@
   // Collapsible station sections (Stations view). Expanded by default; the
   // collapsed set is persisted per hall+station so the layout survives reloads.
   function stationCollapsed() {
-    try { return new Set(Object.keys(JSON.parse(localStorage.getItem(STATION_STATE_KEY) || "{}"))); }
+    try {
+      const v = JSON.parse(localStorage.getItem(STATION_STATE_KEY) || "[]");
+      return new Set(Array.isArray(v) ? v : Object.keys(v));
+    }
     catch (e) { return new Set(); }
   }
   function setStationCollapsed(key, collapsed) {
     const s = stationCollapsed();
     if (collapsed) s.add(key); else s.delete(key);
     try {
-      localStorage.setItem(STATION_STATE_KEY, JSON.stringify(Object.fromEntries(s)));
+      localStorage.setItem(STATION_STATE_KEY, JSON.stringify(Array.from(s)));
     } catch (e) {}
   }
   const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
@@ -588,6 +609,7 @@
   VIEWS.forEach((v) => $("#seg-" + v).addEventListener("click", () => setView(v)));
   function setView(v) {
     state.view = v;
+    try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
     VIEWS.forEach((x) => {
       const b = $("#seg-" + x);
       b.classList.toggle("active", x === v);
@@ -722,6 +744,19 @@
     if (t >= 11 && t < 16.5) return "lunch";
     if (t >= 16.5) return "dinner";
     return "breakfast";
+  }
+
+  // Restore persisted view mode before the first render (HTML defaults to
+  // Categories; the active class + state are aligned here without re-rendering).
+  let savedView = null;
+  try { savedView = localStorage.getItem(VIEW_KEY); } catch (e) {}
+  if (savedView && VIEWS.includes(savedView) && savedView !== state.view) {
+    state.view = savedView;
+    VIEWS.forEach((x) => {
+      const b = $("#seg-" + x);
+      b.classList.toggle("active", x === savedView);
+      b.setAttribute("aria-selected", String(x === savedView));
+    });
   }
 
   const initialMeal = defaultMeal();
