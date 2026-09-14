@@ -271,9 +271,22 @@ button { font: inherit; cursor: pointer; }
   margin-bottom: 12px;
 }
 .station-head {
-  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  width: 100%;
+  /* it's a <button> — reset the UA defaults */
+  border: none; background: none; padding: 2px 0; margin-bottom: 6px;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  -webkit-appearance: none; appearance: none; border-radius: 8px;
 }
+.station-head:hover .station-name { color: var(--text); }
+.station-head .chev {
+  margin-left: auto; flex: 0 0 auto;
+  width: 1rem; height: 1rem; display: inline-flex; color: var(--dim);
+  transition: transform .18s ease;
+}
+.station.collapsed .chev { transform: rotate(-90deg); }
+.station.collapsed .items { display: none; }
+.station.collapsed .station-head { margin-bottom: 2px; }
 .station-name {
   font-size: .82rem; font-weight: 700; letter-spacing: .8px;
   color: var(--accent2);

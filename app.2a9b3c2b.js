@@ -38,6 +38,7 @@
   /* ---------- theme (dark default, light opt-in) ---------- */
 
   const THEME_KEY = "eas-theme";
+  const STATION_STATE_KEY = "eas-stations-collapsed"; // { "<hall>||<station>": true } — collapsed set
   function isLight() { return document.documentElement.classList.contains("light"); }
   const ICON_M = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
   const ICON_S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
@@ -396,6 +397,21 @@
     return searching ? e.hall + " · " + e.station : e.station;
   }
 
+  // Collapsible station sections (Stations view). Expanded by default; the
+  // collapsed set is persisted per hall+station so the layout survives reloads.
+  function stationCollapsed() {
+    try { return new Set(Object.keys(JSON.parse(localStorage.getItem(STATION_STATE_KEY) || "{}"))); }
+    catch (e) { return new Set(); }
+  }
+  function setStationCollapsed(key, collapsed) {
+    const s = stationCollapsed();
+    if (collapsed) s.add(key); else s.delete(key);
+    try {
+      localStorage.setItem(STATION_STATE_KEY, JSON.stringify(Object.fromEntries(s)));
+    } catch (e) {}
+  }
+  const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+
   function renderStations() {
     const c = $("#content");
     c.innerHTML = "";
@@ -406,6 +422,7 @@
       ? state.data.halls.filter((h) => !h.closed && !h.error)
       : [selectedHall(c)];
     if (!searching && !halls[0]) return;
+    const collapsed = stationCollapsed();
     let shown = 0;
     for (const hall of halls) {
       if (!hall) continue;
@@ -422,8 +439,13 @@
       // leads, exactly like the normal Stations view.
       for (const name of order) {
         const st = byStation[name];
+        const key = hall.name + "||" + name;
         const box = el("section", "station");
-        const head = el("div", "station-head");
+        const head = el("button", "station-head");
+        head.type = "button";
+        const isCollapsed = collapsed.has(key);
+        if (isCollapsed) box.classList.add("collapsed");
+        head.setAttribute("aria-expanded", String(!isCollapsed));
         if (searching) {
           head.appendChild(el("span", "station-name", hall.name));
           head.appendChild(el("span", "station-group", name));
@@ -431,10 +453,19 @@
           head.appendChild(el("span", "station-name", name));
           if (st.group) head.appendChild(el("span", "station-group", st.group));
         }
+        const chev = el("span", "chev");
+        chev.innerHTML = CHEV;
+        chev.setAttribute("aria-hidden", "true");
+        head.appendChild(chev);
         box.appendChild(head);
         const ul = el("ul", "items");
         for (const it of st.items) ul.appendChild(makeItemButton({ item: it, hall: hall.name, station: name }));
         box.appendChild(ul);
+        head.addEventListener("click", () => {
+          const nowCollapsed = box.classList.toggle("collapsed");
+          head.setAttribute("aria-expanded", String(!nowCollapsed));
+          setStationCollapsed(key, nowCollapsed);
+        });
         c.appendChild(box);
       }
     }
