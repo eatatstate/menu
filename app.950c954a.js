@@ -275,6 +275,13 @@
       });
       row.appendChild(b);
     });
+    // Restored (persisted) hall: center it in the horizontal scroller.
+    // Skipped once the user has clicked a chip this session. Manual
+    // scrollLeft (not scrollIntoView) so the page never scrolls vertically.
+    const activeChip = row.querySelector(".hall-chip.active");
+    if (activeChip && !userPickedHall) {
+      row.scrollLeft = activeChip.offsetLeft - (row.clientWidth - activeChip.clientWidth) / 2;
+    }
   }
 
   function renderCatRow() {
