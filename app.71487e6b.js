@@ -41,6 +41,7 @@
   const STATION_STATE_KEY = "eas-stations-collapsed"; // ["<hall>||<station>", ...] — collapsed set
   const VIEW_KEY = "eas-view";       // "stations" | "categories" | "nutrition"
   const HALL_KEY = "eas-hall";       // hall name (index shifts when halls close, so persist by name)
+  const CAT_STATE_KEY = "eas-cats-collapsed"; // [category id, ...] — collapsed set (Categories view)
   function isLight() { return document.documentElement.classList.contains("light"); }
   const ICON_M = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
   const ICON_S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
@@ -440,6 +441,22 @@
   }
   const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
 
+  // Collapsible category sections (Categories view). Categories are a fixed,
+  // hall-independent set, so the collapsed set is keyed by category id only.
+  function catCollapsed() {
+    try {
+      const v = JSON.parse(localStorage.getItem(CAT_STATE_KEY) || "[]");
+      return new Set(Array.isArray(v) ? v : Object.keys(v));
+    }
+    catch (e) { return new Set(); }
+  }
+  function setCatCollapsed(cat, collapsed) {
+    const s = catCollapsed();
+    if (collapsed) s.add(cat); else s.delete(cat);
+    try { localStorage.setItem(CAT_STATE_KEY, JSON.stringify(Array.from(s))); }
+    catch (e) {}
+  }
+
   function renderStations() {
     const c = $("#content");
     c.innerHTML = "";
@@ -531,17 +548,33 @@
     if (!entries.length) { c.appendChild(el("div", "empty", "No dishes match your search.")); return; }
     const byCat = {};
     for (const e of entries) (byCat[e.item.cat] = byCat[e.item.cat] || []).push(e);
+    const collapsed = catCollapsed();
     for (const cat of CATEGORIES) {
       const list = byCat[cat];
       if (!list) continue;
       // Items matching a protein type (beef, lamb, …) float to the top of each category.
       list.sort((a, b) =>
         (detectProteins(b.item.name).length ? 1 : 0) - (detectProteins(a.item.name).length ? 1 : 0));
-      const sec = el("section", "cat-section");
-      sec.appendChild(el("h2", null, CAT_LABEL[cat] + "  (" + list.length + ")"));
+      const sec = el("section", "cat-section" + (collapsed.has(cat) ? " collapsed" : ""));
+      const head = el("button", "cat-head");
+      head.type = "button";
+      head.setAttribute("aria-expanded", String(!collapsed.has(cat)));
+      const label = el("span", "cat-head-label");
+      label.textContent = CAT_LABEL[cat] + "  (" + list.length + ")";
+      head.appendChild(label);
+      const chev = el("span", "chev");
+      chev.innerHTML = CHEV;
+      chev.setAttribute("aria-hidden", "true");
+      head.appendChild(chev);
+      sec.appendChild(head);
       const ul = el("ul", "cat-list");
       for (const e of list) ul.appendChild(makeListItemButton(e, searching));
       sec.appendChild(ul);
+      head.addEventListener("click", () => {
+        const nowCollapsed = sec.classList.toggle("collapsed");
+        head.setAttribute("aria-expanded", String(!nowCollapsed));
+        setCatCollapsed(cat, nowCollapsed);
+      });
       c.appendChild(sec);
     }
   }
