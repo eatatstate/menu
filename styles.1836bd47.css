@@ -347,7 +347,8 @@ button { font: inherit; cursor: pointer; }
   color: var(--accent); margin: 0 0 8px; padding: 2px 4px 2px 10px;
   border: none; border-left: 3px solid var(--accent);
   background: none; text-align: left; cursor: pointer;
-  -webkit-appearance: none; appearance: none; border-radius: 8px;
+  /* no border-radius: it would round the ends of the left border line */
+  -webkit-appearance: none; appearance: none;
 }
 .cat-head:hover .cat-head-label { color: var(--text); }
 .cat-head .chev {
