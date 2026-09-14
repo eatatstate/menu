@@ -165,7 +165,7 @@ button { font: inherit; cursor: pointer; }
 
 .controls {
   max-width: 860px; margin: 0 auto;
-  padding: 8px 16px 0;
+  padding: 4px 16px 0;
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
 }
 .controls .seg { flex: 0 1 auto; }
