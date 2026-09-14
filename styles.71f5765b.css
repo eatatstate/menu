@@ -216,7 +216,7 @@ button { font: inherit; cursor: pointer; }
   background: color-mix(in srgb, var(--accent2) 12%, var(--chip));
 }
 
-.search-row { max-width: 860px; margin: 0 auto; padding: 8px 16px 0; }
+.search-row { max-width: 860px; margin: 0 auto; padding: 4px 16px 0; }
 .search-wrap { position: relative; }
 .search-ico {
   position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
