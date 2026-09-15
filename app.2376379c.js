@@ -674,7 +674,7 @@
     $("#modal").hidden = true;
     document.body.style.overflow = "";
   }
-  $("#modal").addEventListener("click", (e) => { if (e.target.hasAttribute("data-close")) closeModal(); });
+  $("#modal").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
   /* ---------- controls ---------- */
