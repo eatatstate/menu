@@ -196,8 +196,17 @@ button { font: inherit; cursor: pointer; }
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
 }
 .controls .seg { flex: 0 1 auto; }
-#search-toggle { margin-left: auto; flex: 0 0 auto; }
-.cat-row { flex-basis: 100%; }
+#search-toggle { margin-left: auto; flex: 0 0 auto; order: 2; }
+.cat-row { flex-basis: 100%; order: 3; }
+/* Search row lives inside .controls: on desktop it takes the space between
+   the view-mode segment and the search button (input left of the button);
+   on mobile it wraps to a full-width row below the button. The category
+   chips row (order 3) always lands last. */
+.search-row { flex: 1 1 160px; min-width: 0; order: 1; }
+@media (max-width: 640px) {
+  #search-toggle { order: 1; }
+  .search-row { flex: 1 1 100%; order: 2; }
+}
 .seg {
   display: inline-flex;
   background: var(--panel);
@@ -251,8 +260,7 @@ button { font: inherit; cursor: pointer; }
   background: color-mix(in srgb, var(--accent2) 12%, var(--chip));
 }
 
-.search-row { max-width: 860px; margin: 0 auto; padding: 4px 16px 0; }
-.search-wrap { position: relative; }
+.search-wrap { position: relative; width: 100%; }
 .search-ico {
   position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
   color: var(--dim); font-size: 1.05rem; pointer-events: none;
