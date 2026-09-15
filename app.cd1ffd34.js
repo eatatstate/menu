@@ -14,7 +14,7 @@
   // Also enabled with ?static=1 for testing against a local server.
   const STATIC = location.hostname.endsWith(".github.io") ||
     new URLSearchParams(location.search).has("static");
-  let staticFile = null; // {date, fetched_at, meals: {breakfast: {fetched_at, halls}, ...}}
+  let staticDate = null; // YYYY-MM-DD of the newest date dir (data/<date>/) that has data
 
   const state = {
     data: null,          // {meal, date, fetched_at, halls:[...]}
@@ -110,64 +110,98 @@
     }
   }
 
-  // Find the most recent snapshot in data/ (today back to 7 days).
+  // Fetch one per-meal snapshot from data/<date>/<meal>.json; null if absent.
+  async function fetchMealFile(date, meal) {
+    try {
+      const res = await fetch("data/" + date + "/" + meal + ".json", { cache: "no-cache" });
+      if (!res.ok) return null;
+      const f = await res.json();
+      if (f && Array.isArray(f.halls) && f.halls.length) return f;
+      return null;
+    } catch (e) { return null; }
+  }
+
+  // Resolve the newest date (today back 7 days) that actually has menu data,
+  // by probing a representative meal file. Cached for the session so meal-tab
+  // switches don't re-probe.
   async function loadStatic(force) {
-    if (staticFile && !force) return true;
-    staticFile = null;
+    if (staticDate && !force) return true;
+    staticDate = null;
     for (let i = 0; i < 7; i++) {
       const key = detDateStr(i);
-      try {
-        const res = await fetch("data/" + key + ".json", { cache: "no-cache" });
-        if (!res.ok) continue;
-        const f = await res.json();
-        if (f && f.meals && Object.keys(f.meals).length) {
-          staticFile = f;
-          return true;
-        }
-      } catch (e) { /* try the previous day */ }
+      for (const probe of ["lunch", "breakfast", "dinner"]) {
+        if (await fetchMealFile(key, probe)) { staticDate = key; return true; }
+      }
     }
     return false;
   }
 
-  async function fetchMenusStatic(meal, force) {
+  // Find the newest date (newest first, back 7 days) that has data for THIS
+  // meal — a date can be present but lack a meal file (all halls closed).
+  async function findMealData(meal) {
+    const order = [];
+    if (staticDate) order.push(staticDate);
+    for (let i = 0; i < 7; i++) order.push(detDateStr(i));
+    const seen = new Set();
+    for (const date of order) {
+      if (seen.has(date)) continue;
+      seen.add(date);
+      const d = await fetchMealFile(date, meal);
+      if (d) return { date: date, data: d };
+    }
+    return null;
+  }
+
+  async function fetchMenusStatic(meal, force, seq) {
     state.meal = meal;
     renderChrome();
-    if (!staticFile || force) {
-      if (!staticFile) {
+    state.loading = true;
+    const btn = $("#refresh-btn");
+    btn.classList.add("spinning");
+    try {
+      if (!staticDate || force) {
         const c = $("#content");
         c.innerHTML = "";
         c.appendChild(el("div", "status", "Loading menu data…"));
+        await loadStatic(force);
       }
-      await loadStatic(force);
+      const found = await findMealData(meal);
+      if (seq !== undefined && seq !== reqSeq) return; // superseded
+      if (!found) {
+        const c = $("#content");
+        c.innerHTML = "";
+        c.appendChild(el("div", "empty",
+          staticDate ? "No " + meal + " data in the latest snapshot."
+                     : "No menu data found. Check the data branch in the repository."));
+        return;
+      }
+      state.data = {
+        meal: meal,
+        date: found.date,
+        fetched_at: found.data.fetched_at,
+        halls: found.data.halls,
+      };
+      state.date = found.date;
+      render();
+    } finally {
+      if (seq === undefined || seq === reqSeq) {
+        state.loading = false;
+        btn.classList.remove("spinning");
+      }
     }
-    if (!staticFile || !staticFile.meals || !staticFile.meals[meal]) {
-      const c = $("#content");
-      c.innerHTML = "";
-      c.appendChild(el("div", "empty", !staticFile
-        ? "No menu data found. Check the data branch in the repository."
-        : "No " + meal + " data in the latest snapshot."));
-      return;
-    }
-    const blk = staticFile.meals[meal];
-    state.data = {
-      meal: meal,
-      date: staticFile.date,
-      fetched_at: blk.fetched_at || staticFile.fetched_at,
-      halls: blk.halls,
-    };
-    state.date = staticFile.date;
-    render();
   }
 
-  // Dispatch to the live API or static snapshot depending on mode.
-  function doFetch(meal, opts) {
-    if (STATIC) return fetchMenusStatic(meal, opts && opts.force);
-    return fetchMenus(meal, todayStr());
-  }
-
+  // Dispatch to the live API or static snapshot depending on mode. One
+  // request-sequence counter covers both paths so a slow response can never
+  // overwrite a newer one (rapid meal-tab switching).
   let reqSeq = 0;
-  async function fetchMenus(meal, date) {
+  function doFetch(meal, opts) {
     const seq = ++reqSeq;
+    if (STATIC) return fetchMenusStatic(meal, opts && opts.force, seq);
+    return fetchMenus(meal, todayStr(), seq);
+  }
+
+  async function fetchMenus(meal, date, seq) {
     state.meal = meal;
     renderChrome();
     state.loading = true;
@@ -229,7 +263,7 @@
 
   function renderChrome() {
     if (state.date) $("#date-label").textContent = state.date;
-    document.title = "Eat at State - Simplified";
+    document.title = "Eat@State - Simplified";
   }
 
   function render() {
