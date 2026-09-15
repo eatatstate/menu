@@ -305,6 +305,7 @@
         userPickedHall = true;
         state.hallIndex = i;
         try { localStorage.setItem(HALL_KEY, h.name); } catch (e) {}
+        gaEvent("select_hall", { hall: h.name, meal: state.meal });
         renderHallRow();
         renderContentOnly();
       });
@@ -646,9 +647,28 @@
     if (!shown) c.appendChild(el("div", "empty", "No dishes match your search."));
   }
 
+  /* ---------- analytics (GA4, optional — no-op if gtag absent) ---------- */
+
+  function gaEvent(name, params) {
+    try { if (typeof window.gtag === "function") window.gtag("event", name, params || {}); } catch (e) {}
+  }
+  // Debounce repeated search-as-you-type so we log one event per settled query.
+  let searchTimer = null;
+  function gaSearch(query) {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => gaEvent("search", { search_term: query }), 400);
+  }
+
   /* ---------- modal ---------- */
 
   function openModal(entry) {
+    gaEvent("view_item", {
+      item_name: entry.item.name,
+      hall: entry.hall,
+      station: entry.station,
+      category: entry.item.cat || "",
+      meal: state.meal,
+    });
     const m = $("#modal");
     const it = entry.item;
     $("#modal-title").textContent = it.name;
@@ -684,6 +704,7 @@
   function setView(v) {
     state.view = v;
     try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
+    gaEvent("select_view", { view: v, meal: state.meal });
     VIEWS.forEach((x) => {
       const b = $("#seg-" + x);
       b.classList.toggle("active", x === v);
@@ -713,6 +734,7 @@
   searchInput.addEventListener("input", () => {
     state.query = searchInput.value.trim();
     $("#search-clear").hidden = !state.query;
+    if (state.query) gaSearch(state.query);
     renderCatRow(); // chip counts follow the search scoping (all halls)
     renderContentOnly();
   });
@@ -734,6 +756,7 @@
   });
   function setMeal(m) {
     if (m === state.meal && state.data) return;
+    gaEvent("select_meal", { meal: m });
     ["breakfast", "lunch", "dinner"].forEach((x) => {
       const b = $("#meal-" + x);
       b.classList.toggle("active", x === m);
